@@ -1,0 +1,34 @@
+services:
+  # BuildKit デーモン (railpack build のビルド実行を担当)
+  #
+  # 本番では rootless イメージ (moby/buildkit:*-rootless) を使うべきだが、
+  # rootless はネストされた user namespace 環境 (例: Podman 上の Docker) では
+  # newuidmap の権限エラーで起動できないことがあるため、
+  # 検証用のこの compose では非 rootless イメージ + privileged で動かす。
+  buildkit:
+    image: moby/buildkit:v0.27.0
+    privileged: true
+    command:
+      - "--addr"
+      - "tcp://0.0.0.0:1234"
+
+  builder:
+    build:
+      context: ./builder
+    environment:
+      BUILDKIT_HOST: tcp://buildkit:1234
+    volumes:
+      - ./builder/output:/app/output
+    depends_on:
+      - buildkit
+    # ビルド対象やビルド方式は CLI 引数で指定する (例):
+    command:
+      - "-source-type=git"
+      - "-git-url=https://github.com/launchs-org/sample-go-app"
+      - "-git-branch=main"
+      - "-build-method=railpack"
+      # レジストリに push する場合は以下を有効にする:
+      # - "-push"
+      # - "-image-ref=registry.example.com/project/app:latest"
+      # - "-registry-username=..."
+      # - "-registry-password=..."
