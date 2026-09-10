@@ -1,1 +1,3 @@
 builder/output/
+auth-server/auth-server
+auth-server/certs/
