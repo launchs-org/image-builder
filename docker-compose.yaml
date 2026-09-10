@@ -1,4 +1,29 @@
 services:
+  # push 検証用の OCI レジストリ (https://github.com/distribution/distribution)
+  # push/pull は auth-server が発行する JWT (Bearer トークン) で認証させる。
+  registry:
+    image: registry:3
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./registry/config.yml:/etc/distribution/config.yml
+      - ./auth-server/certs:/certs:ro
+    depends_on:
+      - auth-server
+
+  # push 用の短命 (10分) JWT を発行する検証用トークンサーバー。
+  # 署名鍵/証明書は事前に openssl で用意しておく (auth-server/README.md 参照)。
+  auth-server:
+    build:
+      context: ./auth-server
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./auth-server/certs:/certs:ro
+    command:
+      - "-key=/certs/token-signing.key"
+      - "-cert=/certs/token-signing.crt"
+
   # BuildKit デーモン (railpack build のビルド実行を担当)
   #
   # 本番では rootless イメージ (moby/buildkit:*-rootless) を使うべきだが、
@@ -21,14 +46,17 @@ services:
       - ./builder/output:/app/output
     depends_on:
       - buildkit
+      - registry
     # ビルド対象やビルド方式は CLI 引数で指定する (例):
     command:
       - "-source-type=git"
       - "-git-url=https://github.com/launchs-org/sample-go-app"
       - "-git-branch=main"
       - "-build-method=railpack"
-      # レジストリに push する場合は以下を有効にする:
-      # - "-push"
-      # - "-image-ref=registry.example.com/project/app:latest"
-      # - "-registry-username=..."
-      # - "-registry-password=..."
+      # レジストリに push する場合は以下を有効にする
+      # (-registry-token は auth-server から事前に取得したJWTを都度差し替える。
+      #  例: curl "http://localhost:8000/token?service=registry&scope=repository:project/app:pull,push"):
+      - "-push"
+      - "-image-ref=registry:5000/project/app:latest"
+      - "-registry-token=REPLACE_WITH_TOKEN_FROM_AUTH_SERVER"
+      - "-registry-insecure"

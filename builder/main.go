@@ -29,6 +29,7 @@ func main() {
 	imageRef := flag.String("image-ref", "", "push 先イメージ参照 (例: registry.example.com/project/app:latest) (push=true のとき必須)")
 	registryUsername := flag.String("registry-username", "", "レジストリ認証のユーザー名 (省略可)")
 	registryPassword := flag.String("registry-password", "", "レジストリ認証のパスワード (省略可)")
+	registryToken := flag.String("registry-token", "", "レジストリ認証用の Bearer トークン (事前に取得したJWTなど、指定時は registry-username/password より優先)")
 	registryInsecure := flag.Bool("registry-insecure", false, "TLS証明書検証を行わず、HTTPでのアクセスも許可する (自己署名証明書やローカル検証用)")
 
 	flag.Parse()
@@ -66,6 +67,7 @@ func main() {
 			ImageReference: *imageRef,
 			Username:       *registryUsername,
 			Password:       *registryPassword,
+			BearerToken:    *registryToken,
 			Insecure:       *registryInsecure,
 		})
 		if err != nil {

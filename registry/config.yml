@@ -1,0 +1,17 @@
+# distribution (https://github.com/distribution/distribution) の設定。
+# push/pull を auth-server が発行する JWT で認証させるための token auth 設定。
+version: 0.1
+log:
+  fields:
+    service: registry
+storage:
+  filesystem:
+    rootdirectory: /var/lib/registry
+http:
+  addr: :5000
+auth:
+  token:
+    realm: http://auth-server:8000/token
+    service: registry
+    issuer: image-builder-auth-server
+    rootcertbundle: /certs/token-signing.crt

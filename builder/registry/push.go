@@ -32,6 +32,10 @@ type PushArgs struct {
 	// レジストリ認証のパスワード (Username とセットで指定する)
 	Password string
 
+	// Bearer トークン認証を使う場合のトークン (事前に取得した JWT など)
+	// 指定した場合、Username/Password より優先される
+	BearerToken string
+
 	// true の場合、TLS 証明書検証を行わず、HTTP でのアクセスも許可する
 	// (自己署名証明書のレジストリやローカル検証用のプレーンHTTPレジストリ向け)
 	Insecure bool
@@ -51,7 +55,10 @@ func Push(ctx context.Context, args PushArgs) error {
 	}
 
 	opts := []crane.Option{crane.WithContext(ctx)}
-	if args.Username != "" {
+	switch {
+	case args.BearerToken != "":
+		opts = append(opts, crane.WithAuth(&authn.Bearer{Token: args.BearerToken}))
+	case args.Username != "":
 		opts = append(opts, crane.WithAuth(&authn.Basic{
 			Username: args.Username,
 			Password: args.Password,
