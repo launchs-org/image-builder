@@ -64,3 +64,13 @@ curl -sS -H "Authorization: Bearer $TOKEN" http://localhost:5000/v2/project/app/
 ```bash
 docker compose down
 ```
+
+## ビルド済みイメージ (ghcr.io)
+
+`master` への push をトリガーに GitHub Actions ([.github/workflows/publish-images.yml](.github/workflows/publish-images.yml)) が
+`builder` / `auth-server` イメージをビルドし ghcr.io に公開する。
+
+```
+ghcr.io/launchs-org/image-builder/builder:latest
+ghcr.io/launchs-org/image-builder/auth-server:latest
+```
