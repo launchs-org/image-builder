@@ -5,7 +5,9 @@ import (
 	"flag"
 	"log"
 	"os"
+	"path/filepath"
 
+	"builder/archive"
 	"builder/dockerfile"
 	"builder/downloader"
 	"builder/railpack"
@@ -32,15 +34,28 @@ func main() {
 	registryToken := flag.String("registry-token", "", "レジストリ認証用の Bearer トークン (事前に取得したJWTなど、指定時は registry-username/password より優先)")
 	registryInsecure := flag.Bool("registry-insecure", false, "TLS証明書検証を行わず、HTTPでのアクセスも許可する (自己署名証明書やローカル検証用)")
 
+	// --- 出力関連 (push しない場合) ---
+	outputTar := flag.String("output-tar", "", "push しない場合の出力先 tar.gz ファイルパス (push=true の場合は無視される)")
+
 	flag.Parse()
 
-	sourceDir := "./output/source"
-	imageDir := "./output/image"
+	if !*push && *outputTar == "" {
+		log.Fatal("引数が不正です: push しない場合は output-tar が必須です")
+	}
 
 	source, err := buildSource(*sourceType, *gitURL, *gitBranch, *gitCommit, *zipURL, *zipSha256)
 	if err != nil {
 		log.Fatalf("引数が不正です: %v", err)
 	}
+
+	workDir, err := os.MkdirTemp("", "image-builder-")
+	if err != nil {
+		log.Fatalf("作業ディレクトリの作成に失敗しました: %v", err)
+	}
+	defer os.RemoveAll(workDir)
+
+	sourceDir := filepath.Join(workDir, "source")
+	imageDir := filepath.Join(workDir, "image")
 
 	if err := source.Fetch(sourceDir, func(current, total int64) {
 		log.Printf("download progress: %d/%d", current, total)
@@ -75,7 +90,14 @@ func main() {
 		}
 
 		log.Println("push が完了しました:", *imageRef)
+		return
 	}
+
+	if err := archive.WriteTarGz(imageDir, *outputTar); err != nil {
+		log.Fatalf("tar.gz への出力に失敗しました: %v", err)
+	}
+
+	log.Println("tar.gz を出力しました:", *outputTar)
 }
 
 // CLI 引数からビルド対象の取得元 (Source) を組み立てる

@@ -17,12 +17,17 @@ docker compose up --build builder
 
 ビルド対象・ビルド方式・push 先は `docker-compose.yaml` の `builder.command` (CLI 引数) で指定する。
 
+成果物は **push する** か **tar.gz として出力する (`-output-tar`)** のどちらか一方のみで、
+ディレクトリに展開した状態で残すことはできない。
+
 push する場合は `-push` と `-image-ref` に加えて、以下のいずれかで認証情報を指定する。
 
 - `-registry-username` / `-registry-password` (Basic認証)
 - `-registry-token` (Bearer トークン。事前に取得した JWT など。指定時は username/password より優先)
 
 自己署名証明書のレジストリや HTTP のみのレジストリを使う場合は `-registry-insecure` を付ける。
+
+詳しい CLI 引数は [builder/README.md](builder/README.md) を参照。
 
 ## 後片付け
 

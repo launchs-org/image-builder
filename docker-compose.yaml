@@ -34,9 +34,11 @@ services:
       - "-git-url=https://github.com/launchs-org/sample-go-app"
       - "-git-branch=main"
       - "-build-method=railpack"
-      # レジストリに push する場合は以下を有効にする:
+      # push する場合は以下を有効にする (この場合 output-tar は無視される):
       # - "-push"
       # - "-image-ref=registry.example.com/project/app:latest"
       # - "-registry-username=..."
       # - "-registry-password=..."
       # - "-registry-token=..." (Bearerトークン。指定時はusername/passwordより優先)
+      # push しない場合は output-tar で成果物 (tar.gz) の出力先を指定する:
+      - "-output-tar=/app/output/image.tar.gz"

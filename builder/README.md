@@ -19,6 +19,10 @@ docker run -d --name buildkit --privileged \
 ## 使い方
 
 ビルド対象・ビルド方式・push 先はすべて CLI 引数で指定する。
+成果物は **push する** か **tar.gz として出力する** のどちらか一方のみで、
+ディレクトリに展開した状態で残すことはできない。
+
+### push しない場合 (tar.gz で受け取る)
 
 ```bash
 docker run --rm \
@@ -29,11 +33,12 @@ docker run --rm \
   -source-type=git \
   -git-url=https://github.com/launchs-org/sample-go-app \
   -git-branch=main \
-  -build-method=railpack
+  -build-method=railpack \
+  -output-tar=/app/output/image.tar.gz
 ```
 
-ビルド結果は OCI image layout として `/app/output/image` (コンテナ内) に出力される。
-ホストから参照する場合は上記のように `-v` でボリュームをマウントする。
+`-output-tar` で指定したパスに OCI image layout をまとめた tar.gz が書き出される。
+ホストから受け取る場合は上記のように `-v` でボリュームをマウントする。
 
 ### push する場合
 
@@ -80,6 +85,12 @@ docker run --rm \
 | `-registry-username` / `-registry-password` | Basic 認証情報 (省略可) |
 | `-registry-token` | Bearer トークン認証 (事前に取得した JWT など)。指定時は username/password より優先 |
 | `-registry-insecure` | TLS 証明書検証を行わず、HTTP でのアクセスも許可する (自己署名証明書やローカル検証用) |
+
+### 出力 (push しない場合)
+
+| 引数 | 説明 |
+|---|---|
+| `-output-tar` | 出力先 tar.gz ファイルパス。`-push` を指定しない場合は必須 (`-push` 指定時は無視される) |
 
 ### 環境変数
 
